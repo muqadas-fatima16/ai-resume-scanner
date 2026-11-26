@@ -2,6 +2,7 @@
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 
 from google import genai
 from google.genai import types
@@ -71,7 +72,7 @@ Return JSON in exactly this shape:
 Give 4-7 issues ordered by severity and 3-4 rewrites."""
 
 
-def analyze_resume(api_key: str, resume: str, role: str = "", job_description: str = "",
+def _analyze(api_key: str, resume: str, role: str = "", job_description: str = "",
                    models: list[str] | None = None, time_budget: float = 60) -> dict:
     """Call Gemini and return a cleaned-up analysis dict.
 
@@ -100,6 +101,21 @@ def analyze_resume(api_key: str, resume: str, role: str = "", job_description: s
                 if config is None or "INVALID_ARGUMENT" not in str(exc):
                     break  # only JSON-setting errors are worth a plain retry
     raise RuntimeError("The AI service didn't respond.\n" + "\n".join(errors))
+
+
+_executor = ThreadPoolExecutor(max_workers=4)
+HARD_LIMIT_SECONDS = 75
+
+
+def analyze_resume(api_key: str, resume: str, role: str = "", job_description: str = "") -> dict:
+    """Run the analysis with a hard time limit, so the page can never spin forever."""
+    future = _executor.submit(_analyze, api_key, resume, role, job_description)
+    try:
+        return future.result(timeout=HARD_LIMIT_SECONDS)
+    except FutureTimeout:
+        print("Scan hit the hard time limit")
+        raise RuntimeError("The AI service didn't respond.\nDEADLINE: no answer within "
+                           f"{HARD_LIMIT_SECONDS} seconds (Google's servers may be overloaded).")
 
 
 def parse_json(text: str) -> dict:
