@@ -72,21 +72,24 @@ Give 4-7 issues ordered by severity and 3-4 rewrites."""
 
 
 def analyze_resume(api_key: str, resume: str, role: str = "", job_description: str = "",
-                   models: list[str] | None = None) -> dict:
+                   models: list[str] | None = None, time_budget: float = 60) -> dict:
     """Call Gemini and return a cleaned-up analysis dict.
 
-    Tries each model in turn. For each one it first asks for JSON mode; if the
-    model rejects those settings, it retries with a plain request.
+    Tries each model once (30 s limit per call) and gives up after `time_budget`
+    seconds in total, so visitors never wait forever. If a model rejects JSON
+    mode, it retries that model once with a plain request.
     """
-    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=90_000))
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=30_000))
     prompt = build_prompt(resume, role, job_description)
     json_config = types.GenerateContentConfig(response_mime_type="application/json")
+    started = time.monotonic()
 
     errors = []
     for model in models or DEFAULT_MODELS:
-        for attempt, config in enumerate((json_config, None)):
-            if attempt and "UNAVAILABLE" in errors[-1]:
-                time.sleep(3)  # brief pause before retrying an overloaded model
+        for config in (json_config, None):
+            if time.monotonic() - started > time_budget:
+                errors.append("Stopped: time limit reached")
+                raise RuntimeError("The AI service didn't respond.\n" + "\n".join(errors))
             try:
                 response = client.models.generate_content(model=model, contents=prompt, config=config)
                 return validate(parse_json(response.text), has_job=bool(job_description))
@@ -94,8 +97,8 @@ def analyze_resume(api_key: str, resume: str, role: str = "", job_description: s
                 message = f"{model} ({'json' if config else 'plain'}): {str(exc)[:200]}"
                 print("Model failed ->", message)  # shows in Streamlit Cloud logs
                 errors.append(message)
-                if "NOT_FOUND" in str(exc) or "API_KEY" in str(exc).upper():
-                    break  # retrying this model without settings won't help
+                if config is None or "INVALID_ARGUMENT" not in str(exc):
+                    break  # only JSON-setting errors are worth a plain retry
     raise RuntimeError("The AI service didn't respond.\n" + "\n".join(errors))
 
 
