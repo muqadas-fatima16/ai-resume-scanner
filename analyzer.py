@@ -6,7 +6,13 @@ from google import genai
 from google.genai import types
 
 # Tried in order; the first model the API key can use wins.
-DEFAULT_MODELS = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-2.5-flash"]
+DEFAULT_MODELS = [
+    "gemini-flash-latest",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+]
 
 CATEGORIES = [
     "Impact & metrics",
@@ -80,6 +86,7 @@ def analyze_resume(api_key: str, resume: str, role: str = "", job_description: s
             response = client.models.generate_content(model=model, contents=prompt, config=config)
             return validate(parse_json(response.text), has_job=bool(job_description))
         except Exception as exc:  # try the next model
+            print(f"Model {model} failed: {exc!r}")  # shows in Streamlit Cloud logs
             last_error = exc
     raise RuntimeError(f"The AI service didn't respond: {last_error}")
 

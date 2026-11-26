@@ -163,8 +163,11 @@ if submitted:
                 st.session_state.scans += 1
         except ResumeParseError as exc:
             st.error(str(exc))
-        except Exception:
+        except Exception as exc:
+            print(f"Scan failed: {exc!r}")
             st.error("The AI service is busy or unavailable right now. Please try again in a minute.")
+            with st.expander("Error details"):
+                st.code(str(exc)[:600], language=None, wrap_lines=True)
 
 if "result" in st.session_state:
     st.divider()
