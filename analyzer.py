@@ -7,6 +7,7 @@ from google.genai import types
 
 # Tried in order; the first model the API key can use wins.
 DEFAULT_MODELS = [
+    "gemini-3.8-flash",
     "gemini-flash-latest",
     "gemini-3.6-flash",
     "gemini-3.5-flash",
