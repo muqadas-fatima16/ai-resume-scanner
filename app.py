@@ -165,7 +165,12 @@ if submitted:
             st.error(str(exc))
         except Exception as exc:
             print(f"Scan failed: {exc!r}")
-            st.error("The AI service is busy or unavailable right now. Please try again in a minute.")
+            if "UNAVAILABLE" in str(exc) or "DEADLINE" in str(exc):
+                st.warning("Google's AI servers are overloaded right now. This is usually temporary, "
+                           "so try again in a few minutes. In the meantime, click "
+                           "**Or see an example result** to see what a scan looks like.")
+            else:
+                st.error("The AI service is unavailable right now. Please try again in a minute.")
             with st.expander("Error details"):
                 st.code(str(exc)[:2500], language=None, wrap_lines=True)
 

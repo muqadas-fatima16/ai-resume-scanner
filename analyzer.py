@@ -1,6 +1,7 @@
 """Send a resume to an LLM (Google Gemini) and return a validated analysis."""
 
 import json
+import time
 
 from google import genai
 from google.genai import types
@@ -8,11 +9,10 @@ from google.genai import types
 # Tried in order; the first model the API key can use wins.
 DEFAULT_MODELS = [
     "gemini-3.8-flash",
-    "gemini-flash-latest",
+    "gemini-3.8-flash-lite",
     "gemini-3.6-flash",
+    "gemini-3.6-flash-lite",
     "gemini-3.5-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
 ]
 
 CATEGORIES = [
@@ -84,7 +84,9 @@ def analyze_resume(api_key: str, resume: str, role: str = "", job_description: s
 
     errors = []
     for model in models or DEFAULT_MODELS:
-        for config in (json_config, None):
+        for attempt, config in enumerate((json_config, None)):
+            if attempt and "UNAVAILABLE" in errors[-1]:
+                time.sleep(3)  # brief pause before retrying an overloaded model
             try:
                 response = client.models.generate_content(model=model, contents=prompt, config=config)
                 return validate(parse_json(response.text), has_job=bool(job_description))
