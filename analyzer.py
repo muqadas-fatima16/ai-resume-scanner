@@ -73,23 +73,28 @@ Give 4-7 issues ordered by severity and 3-4 rewrites."""
 
 def analyze_resume(api_key: str, resume: str, role: str = "", job_description: str = "",
                    models: list[str] | None = None) -> dict:
-    """Call Gemini and return a cleaned-up analysis dict."""
-    client = genai.Client(api_key=api_key)
-    prompt = build_prompt(resume, role, job_description)
-    config = types.GenerateContentConfig(
-        response_mime_type="application/json",
-        temperature=0.3,
-    )
+    """Call Gemini and return a cleaned-up analysis dict.
 
-    last_error = None
+    Tries each model in turn. For each one it first asks for JSON mode; if the
+    model rejects those settings, it retries with a plain request.
+    """
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=90_000))
+    prompt = build_prompt(resume, role, job_description)
+    json_config = types.GenerateContentConfig(response_mime_type="application/json")
+
+    errors = []
     for model in models or DEFAULT_MODELS:
-        try:
-            response = client.models.generate_content(model=model, contents=prompt, config=config)
-            return validate(parse_json(response.text), has_job=bool(job_description))
-        except Exception as exc:  # try the next model
-            print(f"Model {model} failed: {exc!r}")  # shows in Streamlit Cloud logs
-            last_error = exc
-    raise RuntimeError(f"The AI service didn't respond: {last_error}")
+        for config in (json_config, None):
+            try:
+                response = client.models.generate_content(model=model, contents=prompt, config=config)
+                return validate(parse_json(response.text), has_job=bool(job_description))
+            except Exception as exc:
+                message = f"{model} ({'json' if config else 'plain'}): {str(exc)[:200]}"
+                print("Model failed ->", message)  # shows in Streamlit Cloud logs
+                errors.append(message)
+                if "NOT_FOUND" in str(exc) or "API_KEY" in str(exc).upper():
+                    break  # retrying this model without settings won't help
+    raise RuntimeError("The AI service didn't respond.\n" + "\n".join(errors))
 
 
 def parse_json(text: str) -> dict:

@@ -167,7 +167,7 @@ if submitted:
             print(f"Scan failed: {exc!r}")
             st.error("The AI service is busy or unavailable right now. Please try again in a minute.")
             with st.expander("Error details"):
-                st.code(str(exc)[:600], language=None, wrap_lines=True)
+                st.code(str(exc)[:2500], language=None, wrap_lines=True)
 
 if "result" in st.session_state:
     st.divider()
