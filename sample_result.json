@@ -1,0 +1,32 @@
+{
+  "overall": 72,
+  "headline": "Strong projects, needs measurable impact",
+  "summary": "A solid early-career CS resume with relevant AI and cloud projects and a clear technical skills section. Most bullets describe tasks rather than results, which makes the projects feel less impressive than they likely are.",
+  "categories": [
+    {"name": "Impact & metrics", "score": 4, "note": "Almost no numbers: users, time saved, accuracy or scale are missing."},
+    {"name": "Clarity & structure", "score": 8, "note": "Clean one-page layout with standard, easy-to-scan sections."},
+    {"name": "Technical skills", "score": 8, "note": "Good breadth across Python, React, AWS and Docker."},
+    {"name": "Projects", "score": 7, "note": "Relevant AI projects, but no links to code or demos."},
+    {"name": "Experience relevance", "score": 5, "note": "Work history is retail; the transferable skills are framed reasonably well."},
+    {"name": "ATS-friendliness", "score": 8, "note": "Simple formatting and standard headings parse cleanly."}
+  ],
+  "strengths": [
+    "Projects use current, in-demand tools (LLMs, FastAPI, Docker, GitHub Actions, AWS)",
+    "Clean, single-column format that applicant tracking systems read easily",
+    "Retail bullets connect customer communication to client-facing tech work",
+    "Clear graduation date and degree concentration"
+  ],
+  "issues": [
+    {"severity": "high", "issue": "Project bullets have no results or numbers", "fix": "Add one measurable outcome per project, e.g. how many resumes scanned, build failures analyzed, or minutes saved."},
+    {"severity": "high", "issue": "No links to GitHub or live demos", "fix": "Add a GitHub link in the header and a short link next to each project title."},
+    {"severity": "medium", "issue": "Objective mentions embedded systems, but most projects are AI/web", "fix": "Tailor the objective to the role, or cut it and let the projects speak."},
+    {"severity": "medium", "issue": "Tools line lists basics like Word and IDLE", "fix": "Drop them to make room for stronger keywords such as PostgreSQL or REST APIs."},
+    {"severity": "low", "issue": "Operations Manager role has no dates", "fix": "Add a date range so the timeline is clear."}
+  ],
+  "rewrites": [
+    {"before": "Built a full-stack application for tracking job applications that uses AI to compare resumes with job descriptions", "after": "Built a full-stack job tracker (React, FastAPI, PostgreSQL) that uses an LLM to compare resumes against job postings, surfacing skill gaps across [X] applications"},
+    {"before": "Developed an AI-powered developer tool that monitors CI/CD workflows via the GitHub API", "after": "Developed an LLM-powered CI/CD assistant that monitors GitHub Actions runs and explains build failures, cutting debugging time by ~[X]%"},
+    {"before": "Tracked inventory levels and flagged discrepancies", "after": "Tracked inventory for [X]+ SKUs and flagged discrepancies, reducing stock errors by [X]%"}
+  ],
+  "match": null
+}
